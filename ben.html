@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Faulty Solar Panel Detection</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+    <h1>Solar Panel Fault Detection</h1>
+    <p class="description">Upload an image of your solar panel to detect any faults and get a prediction.</p>
+
+    <form id="imageForm" enctype="multipart/form-data" class="upload-form">
+        <label for="imageUpload" class="upload-label">
+            <span>Select Image</span>
+            <input type="file" id="imageUpload" name="file" accept=".png, .jpg, .jpeg">
+        </label>
+        <button type="button" onclick="onClickedEstimatePrice()" class="submit-btn">Analyze</button>
+    </form>
+
+    <div class="image-preview">
+        <img id="previewImage" src="#" alt="Preview Image">
+    </div>
+
+    <div id="result" class="result-box">
+        <!-- Predicted label or error message will be displayed here -->
+    </div>
+</div>
+
+<script>
+    document.getElementById('imageUpload').addEventListener('change', previewImage);
+
+    function onClickedEstimatePrice() {
+        var fileInput = document.getElementById('imageUpload');
+        var file = fileInput.files[0];
+
+        if (file) {
+            var formData = new FormData();
+            formData.append('file', file);
+
+            fetch('http://127.0.0.1:5000/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    displayError(data.error);
+                } else {
+                    displayLabel(data.class, data.confidence);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        } else {
+            alert("Please select an image file.");
+        }
+    }
+
+    function displayLabel(label, confidence) {
+        var resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = `<strong>Predicted Label:</strong> ${label}<br><strong>Confidence:</strong> ${confidence}%`;
+    }
+
+    function displayError(error) {
+        var resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = `<strong>Error:</strong> ${error}`;
+    }
+
+    function previewImage(event) {
+        var fileInput = event.target;
+        var file = fileInput.files[0];
+        var preview = document.getElementById('previewImage');
+
+        if (file) {
+            var reader = new FileReader();
+
+            reader.onload = function(event) {
+                preview.src = event.target.result;
+                preview.style.display = 'block';
+            };
+
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = '#';
+            preview.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
